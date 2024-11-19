@@ -9,9 +9,23 @@ const PasswordReset = () => {
   const [isOTPSent, setIsOTPSent] = useState(false);
   const navigate = useNavigate();
 
+  const [prefference, setPreference] = useState(false);
+
+  const handleChangePreference = (e) => {
+    setPreference(true);
+    setLogin({ ...login, preferredLogin: "email" });
+  };
+
+  const handleChangeEmail = (e) => {
+    setPreference(false);
+    setLogin({ ...login, preferredLogin: "phone" });
+  };
+
   const handleChange = (e) => {
     setLogin({ ...login, [e.target.name]: e.target.value });
   };
+
+  console.log(login);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -62,15 +76,45 @@ const PasswordReset = () => {
         <h2>Password Reset</h2>
         {errorMessage && <p className={styles.error}>{errorMessage}</p>}
 
-        <input
+        { prefference ? <input
           placeholder="Enter Your Email"
           type="email"
           name="email"
           onChange={handleChange}
           value={login.email}
           className={styles.input}
-          required
+          
         />
+        :
+        <input
+        placeholder="Enter Your Phone Number"
+        type="text"
+        name="email"
+        onChange={handleChange}
+        value={login.email}
+        className={styles.input}
+        
+      />
+        }
+        {
+          prefference ? ( isOTPSent ? null :
+            <button
+              type="button"
+              className={styles.button}
+              onClick={handleChangeEmail}
+            >
+              Use Phone 
+            </button>
+          ) : (isOTPSent ? null :
+            <button
+              type="button"
+              className={styles.button}
+              onClick={handleChangePreference}
+            >
+              Use Email
+            </button>
+          )
+        }
 
         {isOTPSent && (
           <>

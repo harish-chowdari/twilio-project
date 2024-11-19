@@ -2,8 +2,15 @@ const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
 const dotenv = require("dotenv");
 const UserDetails = require("../Models/AuthenticationModel");
+const twilio = require('twilio');
+
 
 dotenv.config();
+
+const accountSid = process.env.SID;
+const authToken = process.env.AUTH_TOKEN;
+const client = new twilio(accountSid, authToken);
+
 
 const sendOTPEmail = async (req, res) => {
     const { email } = req.body;
@@ -97,7 +104,74 @@ const updatePassword = async (req, res) => {
     }
 };
 
+const sendOtpPhone = async (req, res) => {
+
+    const otp = Math.floor(100000 + Math.random() * 900000);
+        const otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+        const { phone } = req.body;
+
+        if (!phone) {
+            return res.json({ phoneRequire: "Phone number required" });
+        }
+
+        const isUserExist = await UserDetails.findOne({ phone: phone });
+        if (!isUserExist) {
+            return res.json({ userNotExist: "User does not exist" });
+        }
+
+        isUserExist.sms = otp;
+        await isUserExist.save();
+
+    try {
+        const response = await client.messages.create({
+            body: otp,
+            from: process.env.FROM_NO,
+            to: phone
+        });
+        console.log('Message sent:', response.sid);
+        return res.json({ msg: "OTP sent successfully" })
+    } catch (error) {
+        console.error('Error sending message:', error.message)
+    }
+}
+
+const updatePasswordPhone = async (req, res) => {
+    const { phone, otp, newPassword } = req.body;
+
+    if (!phone || !otp || !newPassword) {
+        return res.status(200).json({ allFieldsRequired: "Phone number, OTP, and new password are required" });
+    }
+
+    try {
+        const user = await UserDetails.findOne({ phone: phone });
+
+        if (!user) {
+            return res.status(200).json({ userNotExist: "User not found" });
+        }
+
+// no need to compare bycrypt
+        if (user.sms !== otp) {
+            return res.status(200).json({ otpNotValid: "Invalid OTP" });
+        }
+
+        // no need to compare expiry
+        user.password = newPassword;
+        user.sms = undefined;
+
+        await user.save();
+
+        return res.status(200).json({ updatedPassword: "Password updated successfully" });
+    } catch (error) {
+        return res.status(500).json({ error: "An error occurred while updating the password" });
+    }
+
+}
+
 module.exports = {
     sendOTPEmail,
-    updatePassword
+    updatePassword,
+    sendOtpPhone,
+    updatePasswordPhone
+
 };
