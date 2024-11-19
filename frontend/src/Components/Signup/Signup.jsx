@@ -9,9 +9,25 @@ const Signup = () => {
     phone: "",
     email: "",
     password: "",
+    preferredLogin: "phone",
   });
   const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
+
+  const [prefference, setPreference] = useState(false);
+
+  const handleChangePreference = (e) => {
+    setPreference(true);
+    setSignup({ ...signup, preferredLogin: "email" });
+  };
+
+  const handleChangeEmail = (e) => {
+    setPreference(false);
+    setSignup({ ...signup, preferredLogin: "phone" });
+  };
+
+
+  console.log(signup);
 
   const handleChange = (e) => {
     setSignup({ ...signup, [e.target.name]: e.target.value });
@@ -59,7 +75,9 @@ const Signup = () => {
             className={styles.input}
           />
         </div>
-        <div>
+        
+        { !prefference ?
+         <div>
           <input
             placeholder="Enter Your Phone Number"
             type="text"
@@ -69,6 +87,7 @@ const Signup = () => {
             className={styles.input}
           />
         </div>
+        :
         <div>
           <input
             placeholder="Enter Your Email"
@@ -79,6 +98,14 @@ const Signup = () => {
             className={styles.input}
           />
         </div>
+        }
+
+        { !prefference ? 
+            <p className={styles.text1} onClick={handleChangePreference}>Login by Email ?</p> 
+            : 
+            <p className={styles.text1} onClick={handleChangeEmail}>Login by Number ?</p>
+        }
+
         <div>
           <input
             placeholder="Enter Your Password"

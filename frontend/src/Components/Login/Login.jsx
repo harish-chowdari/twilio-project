@@ -2,12 +2,26 @@ import React, { useState } from "react";
 import axios from "../../axios";
 import { Link, useNavigate } from "react-router-dom";
 import styles from "./Login.module.css"; 
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const Login = () => {
-  const [login, setLogin] = useState({ phone: "", email: "", password: "" });
+  const [login, setLogin] = useState({ phone: "", email: "", password: "", preferredLogin: "phone", });
   const [errorMessage, setErrorMessage] = useState(""); 
   const navigate = useNavigate();
 
+  const [prefference, setPreference] = useState(false);
+
+  const handleChangePreference = (e) => {
+    setPreference(true);
+    setLogin({ ...login, preferredLogin: "email" });
+  };
+
+  const handleChangeEmail = (e) => {
+    setPreference(false);
+    setLogin({ ...login, preferredLogin: "phone" });
+  };
+console.log(login);
   const handleChange = (e) => {
     setLogin({ ...login, [e.target.name]: e.target.value });
   };
@@ -20,13 +34,14 @@ const Login = () => {
       const res = await axios.post("/login", { ...login });
 
       if (res.data.EnterAllDetails) {
-        setErrorMessage(res.data.EnterAllDetails);
+        toast.error(res.data.EnterAllDetails);
       } else if (res.data.NotExist) {
-        setErrorMessage(res.data.NotExist);
+        toast.error(res.data.NotExist);
       } else if (res.data.Incorrect) {
-        setErrorMessage(res.data.Incorrect);
+        toast.error(res.data.Incorrect);
       } else {
         const userId = res.data._id; 
+        toast.success("Login successful");
         navigate(`/home/${userId}`);
       }
     } catch (error) {
@@ -41,7 +56,7 @@ const Login = () => {
         <h2>Login</h2>
         {errorMessage && <p className={styles.error}>{errorMessage}</p>}
 
-        <input
+        { !prefference ? <input
           placeholder="Phone"
           type="text"
           name="phone"
@@ -49,6 +64,8 @@ const Login = () => {
           value={login.phone}
           className={styles.input}
         />
+
+        :
         <input
           placeholder="Email"
           type="email"
@@ -56,7 +73,14 @@ const Login = () => {
           onChange={handleChange}
           value={login.email}
           className={styles.input}
-        />
+        />}
+
+        { !prefference ? 
+            <p className={styles.text1} onClick={handleChangePreference}>Login by Email ?</p> 
+            : 
+            <p className={styles.text1} onClick={handleChangeEmail}>Login by Number ?</p>
+        }
+        
         <input
           placeholder="Password"
           type="password"
@@ -83,6 +107,7 @@ const Login = () => {
           </Link>
         </p>
       </div>
+      <ToastContainer position="top-center" />
     </form>
   );
 };

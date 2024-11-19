@@ -69,3 +69,10 @@ h2 {
 .link:hover {
   text-decoration: underline;
 }
+
+.text1{
+  margin: 0px;
+  text-align: right;
+  color: #1c4f75;
+  cursor: pointer;
+}
