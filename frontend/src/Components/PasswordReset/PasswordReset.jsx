@@ -4,21 +4,26 @@ import { Link, useNavigate } from "react-router-dom";
 import styles from "./PasswordReset.module.css";
 
 const PasswordReset = () => {
-  const [login, setLogin] = useState({ email: "", otp: "", newPassword: "" });
+  const [login, setLogin] = useState({ email: "", otp: "", newPassword: "", phone: "", });
   const [errorMessage, setErrorMessage] = useState("");
   const [isOTPSent, setIsOTPSent] = useState(false);
   const navigate = useNavigate();
 
   const [prefference, setPreference] = useState(false);
+  const [preferredLogin, setPreferredLogin] = useState("phone");
 
   const handleChangePreference = (e) => {
     setPreference(true);
-    setLogin({ ...login, preferredLogin: "email" });
+    setPreferredLogin("email");
+    setLogin({ ...login,  });
   };
+
+  console.log(preferredLogin);
 
   const handleChangeEmail = (e) => {
     setPreference(false);
-    setLogin({ ...login, preferredLogin: "phone" });
+    setPreferredLogin("phone");
+    setLogin({ ...login});
   };
 
   const handleChange = (e) => {
@@ -26,6 +31,49 @@ const PasswordReset = () => {
   };
 
   console.log(login);
+
+  const handleSms = async (e) => {
+    //e.preventDefault();
+    setErrorMessage("");
+
+    if (!isOTPSent) {
+      try {
+        const res = await axios.post("/sms", { phone: login.phone });
+
+        if (res.data.phoneRequire) {
+          setErrorMessage("Please enter your phone number.");
+        } else if (res.data.userNotExist) {
+          setErrorMessage("No account found with this phone number.");
+        } else if (res.data.msg === "OTP sent successfully") {
+          alert("OTP has been sent to your Mobile. Please check your SMS.");
+          setIsOTPSent(true);
+        }
+      } catch (error) {
+        console.log(error);
+        setErrorMessage("An error occurred. Please try again.");
+      }
+    } else {
+      try {
+        const res = await axios.post("/update-password-phone", {
+          phone: login.phone,
+          otp: login.otp,
+          newPassword: login.newPassword,
+        });
+
+        if (res.data.otpNotValid) {
+          setErrorMessage("Invalid OTP. Please try again.");
+        } else if (res.data.otpExpired) {
+          setErrorMessage("OTP has expired. Please request a new one.");
+        } else if (res.data.updatedPassword) {
+          alert("Password updated successfully! You can now log in.");
+          navigate("/");
+        }
+      } catch (error) {
+        console.log(error);
+        setErrorMessage("An error occurred while updating the password.");
+      }
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -71,7 +119,7 @@ const PasswordReset = () => {
   };
 
   return (
-    <form className={styles.container} onSubmit={handleSubmit}>
+    <form className={styles.container}>
       <div className={styles.formContainer}>
         <h2>Password Reset</h2>
         {errorMessage && <p className={styles.error}>{errorMessage}</p>}
@@ -89,9 +137,9 @@ const PasswordReset = () => {
         <input
         placeholder="Enter Your Phone Number"
         type="text"
-        name="email"
+        name="phone"
         onChange={handleChange}
-        value={login.email}
+        value={login.phone}
         className={styles.input}
         
       />
@@ -140,7 +188,9 @@ const PasswordReset = () => {
           </>
         )}
 
-        <button type="submit" className={styles.button}>
+        <button style={{ marginLeft: "10px" }} type="button" onClick={(e)=>{
+          preferredLogin === "email" ? handleSubmit(e) : handleSms(e)
+        }} className={styles.button}>
           {isOTPSent ? "Reset Password" : "Send OTP"}
         </button>
 
